@@ -1,28 +1,33 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/material.dart';
 
-class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+void showNotificationDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Evita que es tanqui si es toca fora
+    builder: (BuildContext dialogContext) {
+      Future.delayed(Duration(seconds: 15), () {
+        if (Navigator.of(dialogContext).canPop()) {
+          Navigator.of(dialogContext).pop();
+        }
+      });
 
-  void initNotifications() {
-    final settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    );
-    _notificationsPlugin.initialize(settings);
-  }
-
-  void showNotification(String pokemonName) {
-    _notificationsPlugin.show(
-      0,
-      "Pokédex",
-      "$pokemonName ara és el teu favorit!",
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'channel_id',
-          'Pokédex Notificacions',
-          importance: Importance.high,
+      return AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Notificació'),
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
         ),
-      ),
-    );
-  }
+        content: Text(message),
+        actions: [
+        ],
+      );
+    },
+  );
+
+  print(message); // Mostra el missatge a la consola
 }

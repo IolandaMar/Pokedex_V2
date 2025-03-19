@@ -24,7 +24,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   TextEditingController _searchController = TextEditingController();
   int _offset = 0;
   final int _limit = 20;
-  Set<String> _favoritePokemons = Set<String>();
 
   // Pokémon seleccionats per comparar
   dynamic _selectedPokemon1;
@@ -41,7 +40,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   void initState() {
     super.initState();
     _fetchPokemon();
-    _loadFavorites();
   }
 
   Future<void> _fetchPokemon() async {
@@ -52,25 +50,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
       _filteredPokemonList = _pokemonList;
       _isLoading = false;
     });
-  }
-
-  Future<void> _loadFavorites() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _favoritePokemons =
-      Set<String>.from(prefs.getStringList('favoritePokemons') ?? []);
-    });
-  }
-
-  Future<void> _addToFavorites(dynamic pokemon) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (_favoritePokemons.contains(pokemon['name'])) {
-      _favoritePokemons.remove(pokemon['name']);
-    } else {
-      _favoritePokemons.add(pokemon['name']);
-    }
-    await prefs.setStringList('favoritePokemons', _favoritePokemons.toList());
-    setState(() {});
   }
 
   void _loadMorePokemon() {
@@ -265,8 +244,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       itemCount: _filteredPokemonList.length,
       itemBuilder: (context, index) {
         final pokemon = _filteredPokemonList[index];
-        final isFavorite = _favoritePokemons.contains(pokemon['name']);
-        return _buildPokemonCard(pokemon, isFavorite, isDarkMode);
+        return _buildPokemonCard(pokemon, isDarkMode);
       },
     );
   }
@@ -276,13 +254,12 @@ class _PokedexScreenState extends State<PokedexScreen> {
       itemCount: _filteredPokemonList.length,
       itemBuilder: (context, index) {
         final pokemon = _filteredPokemonList[index];
-        final isFavorite = _favoritePokemons.contains(pokemon['name']);
-        return _buildPokemonCard(pokemon, isFavorite, isDarkMode);
+        return _buildPokemonCard(pokemon, isDarkMode);
       },
     );
   }
 
-  Widget _buildPokemonCard(dynamic pokemon, bool isFavorite, bool isDarkMode) {
+  Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
     bool isSelected = pokemon == _selectedPokemon1 || pokemon == _selectedPokemon2;
 
     // Mapejar els tipus de Pokémon als colors
@@ -326,19 +303,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,  // Centrar els elements
+            crossAxisAlignment: CrossAxisAlignment.center,  // Centrar els elements
             children: [
               Image.network(pokemon['image'], height: 100, width: 100),
               SizedBox(height: 8),
               Text(
                 pokemon['name'],
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: Icon(Icons.favorite, color: isFavorite ? Colors.red : Colors.grey),
-                onPressed: () async {
-                  await _addToFavorites(pokemon);
-                },
               ),
             ],
           ),
@@ -362,11 +334,11 @@ class _PokedexScreenState extends State<PokedexScreen> {
       'fairy': Colors.purple,
       'dragon': Colors.deepOrange,
       'poison': Colors.purpleAccent,
-      'steel': Colors.grey,
-      'fighting': Colors.orange,
-      'ice': Colors.lightBlue,
+      'steel': Colors.blueGrey,
+      'fighting': Colors.brown,
+      'ice': Colors.cyan,
     };
 
-    return typeBorderColors[type] ?? Colors.grey;  // Valor per defecte si no es troba el tipus
+    return typeBorderColors[type] ?? Colors.grey;  // Valor per defecte si no hi ha tipus
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'pokemon_api.dart';
+import 'favorites_manager.dart';
 
 class FavoritesScreen extends StatefulWidget {
   @override
@@ -11,6 +12,7 @@ class FavoritesScreen extends StatefulWidget {
 class _FavoritesScreenState extends State<FavoritesScreen> {
   List<String> _favoritePokemons = [];
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final FavoritesManager _favoritesManager = FavoritesManager();
 
   @override
   void initState() {
@@ -21,9 +23,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   // Cargar los Pokémon favoritos desde SharedPreferences
   Future<void> _loadFavorites() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> favorites = await _favoritesManager.loadFavorites();
     setState(() {
-      _favoritePokemons = prefs.getStringList('favoritePokemons') ?? [];
+      _favoritePokemons = favorites;
     });
   }
 
@@ -55,9 +57,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       '',
       generalNotificationDetails,
     );
-
-    // Mostrar el missatge a la consola
-    print('¡$pokemonName ahora es tu favorito!');
   }
 
   @override

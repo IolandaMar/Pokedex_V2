@@ -6,7 +6,6 @@ import 'notifications.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  NotificationService().initNotifications(); // Inicialitzem notificacions
   runApp(const PokedexApp());
 }
 
