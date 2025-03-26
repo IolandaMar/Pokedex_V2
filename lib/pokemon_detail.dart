@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'favorites_manager.dart'; // Importa el teu gestor de favorits
-import 'notifications.dart'; // Importem el popup de notificació
+import 'favorites_manager.dart';
+import 'notifications.dart';
 
 class PokemonDetail extends StatefulWidget {
   final dynamic pokemon;
@@ -12,7 +12,7 @@ class PokemonDetail extends StatefulWidget {
 }
 
 class _PokemonDetailState extends State<PokemonDetail> {
-  bool isFavorite = false; // Estat per saber si el Pokémon està en favorits
+  bool isFavorite = false;
   final FavoritesManager _favoritesManager = FavoritesManager();
 
   @override
@@ -21,7 +21,6 @@ class _PokemonDetailState extends State<PokemonDetail> {
     _checkIfFavorite();
   }
 
-  // Comprova si el Pokémon ja està a favorits
   Future<void> _checkIfFavorite() async {
     final favorites = await _favoritesManager.loadFavorites();
     setState(() {
@@ -29,7 +28,6 @@ class _PokemonDetailState extends State<PokemonDetail> {
     });
   }
 
-  // Toggle favorite: Afegir o eliminar de favorits
   void toggleFavorite() async {
     if (isFavorite) {
       await _favoritesManager.removeFavorite(widget.pokemon['name']);
@@ -37,7 +35,6 @@ class _PokemonDetailState extends State<PokemonDetail> {
       await _favoritesManager.addFavorite(widget.pokemon['name']);
     }
 
-    // Actualitza l'estat per mostrar si està afegit o eliminat
     setState(() {
       isFavorite = !isFavorite;
     });
@@ -50,7 +47,6 @@ class _PokemonDetailState extends State<PokemonDetail> {
     );
   }
 
-  // Funció per crear una fila de la taula de les estadístiques
   TableRow _buildStatsRow(String label, dynamic value, bool isDarkMode) {
     return TableRow(
       children: [
@@ -59,7 +55,6 @@ class _PokemonDetailState extends State<PokemonDetail> {
     );
   }
 
-  // Funció per crear les cel·les de les estadístiques
   Widget _buildStatCell(String label, dynamic value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -86,8 +81,30 @@ class _PokemonDetailState extends State<PokemonDetail> {
     );
   }
 
-  // Funció per crear la targeta del Pokémon
+  Color _getPokemonTypeColor(String type) {
+    final Map<String, Color> typeColors = {
+      'water': Colors.blue,
+      'fire': Colors.red,
+      'grass': Colors.green,
+      'electric': Colors.yellow.shade700,
+      'bug': Colors.lightGreen,
+      'ghost': Colors.deepPurple,
+      'normal': Colors.grey,
+      'psychic': Colors.pink,
+      'dark': Colors.black,
+      'fairy': Colors.purpleAccent,
+      'dragon': Colors.deepOrange,
+      'poison': Colors.purple,
+      'steel': Colors.blueGrey,
+      'fighting': Colors.brown,
+      'ice': Colors.cyan,
+    };
+    return typeColors[type.toLowerCase()] ?? Colors.grey;
+  }
+
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
+    final types = pokemon['type'] as List;
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 8,
@@ -112,14 +129,19 @@ class _PokemonDetailState extends State<PokemonDetail> {
                 color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
-            SizedBox(height: 6),
-            Text(
-              'Tipus: ${pokemon['type']}',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDarkMode ? Colors.white70 : Colors.black,
-              ),
+            SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              children: types.map<Widget>((type) {
+                final color = _getPokemonTypeColor(type);
+                return Chip(
+                  label: Text(type),
+                  backgroundColor: color.withOpacity(0.9),
+                  labelStyle: TextStyle(color: Colors.white),
+                );
+              }).toList(),
             ),
+            SizedBox(height: 10),
             Text(
               'Alçada: ${pokemon['height']} m',
               style: TextStyle(
@@ -156,12 +178,12 @@ class _PokemonDetailState extends State<PokemonDetail> {
         ],
       ),
       backgroundColor: isDarkMode ? Colors.black : Colors.white,
-      body: SingleChildScrollView( // Solució overflow
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildPokemonCard(widget.pokemon, isDarkMode), // Targeta del Pokémon
+            _buildPokemonCard(widget.pokemon, isDarkMode),
             SizedBox(height: 20),
             Text(
               'Estadístiques:',

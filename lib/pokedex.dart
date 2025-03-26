@@ -33,7 +33,21 @@ class _PokedexScreenState extends State<PokedexScreen> {
   String? _selectedType;
   final List<String> _types = [
     'All',
-    'water', 'fire', 'grass', 'electric', 'bug', 'ghost', 'normal', 'psychic', 'dark', 'fairy', 'dragon', 'poison', 'steel', 'fighting', 'ice'
+    'water',
+    'fire',
+    'grass',
+    'electric',
+    'bug',
+    'ghost',
+    'normal',
+    'psychic',
+    'dark',
+    'fairy',
+    'dragon',
+    'poison',
+    'steel',
+    'fighting',
+    'ice'
   ];
 
   @override
@@ -64,10 +78,11 @@ class _PokedexScreenState extends State<PokedexScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PokemonComparator(
-            firstPokemon: _selectedPokemon1,
-            secondPokemon: _selectedPokemon2,
-          ),
+          builder: (context) =>
+              PokemonComparator(
+                firstPokemon: _selectedPokemon1,
+                secondPokemon: _selectedPokemon2,
+              ),
         ),
       );
     } else {
@@ -86,7 +101,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
   void _selectRandomPokemon() {
     Random random = Random();
     setState(() {
-      _selectedPokemon1 = _filteredPokemonList[random.nextInt(_filteredPokemonList.length)];
+      _selectedPokemon1 =
+      _filteredPokemonList[random.nextInt(_filteredPokemonList.length)];
     });
     Navigator.push(
       context,
@@ -98,7 +114,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = Theme
+        .of(context)
+        .brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -124,7 +142,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
               );
             },
           ),
-          // Afegeix el botó per comparar Pokémon
           IconButton(
             icon: Icon(Icons.compare_arrows),
             onPressed: _comparePokemons,
@@ -143,7 +160,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                // Cercador
                 Expanded(
                   child: TextField(
                     controller: _searchController,
@@ -196,12 +212,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
           ),
           Row(
             children: [
-              // Botó ordenar alfabèticament amb icona
               IconButton(
                 icon: Icon(Icons.sort_by_alpha),
                 onPressed: _sortPokemonAlphabetically,
               ),
-              // Botó per seleccionar un Pokémon aleatori amb icona
               IconButton(
                 icon: Icon(Icons.casino),
                 onPressed: _selectRandomPokemon,
@@ -250,11 +264,15 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildListView(bool isDarkMode) {
-    return ListView.builder(
+    return ListView.separated(
       itemCount: _filteredPokemonList.length,
+      separatorBuilder: (context, index) => SizedBox(height: 16),
       itemBuilder: (context, index) {
         final pokemon = _filteredPokemonList[index];
-        return _buildPokemonCard(pokemon, isDarkMode);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: _buildPokemonCard(pokemon, isDarkMode),
+        );
       },
     );
   }
@@ -262,13 +280,19 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
     bool isSelected = pokemon == _selectedPokemon1 || pokemon == _selectedPokemon2;
 
-    // Mapejar els tipus de Pokémon als colors
-    String pokemonType = pokemon['type'] ?? 'normal';  // Si no té tipus, agafem un valor per defecte
-    Color borderColor = _getPokemonTypeBorderColor(pokemonType);
+    // Llista de tipus
+    List<String> types = [];
+    if (pokemon['type'] is List) {
+      types = List<String>.from(pokemon['type']);
+    } else if (pokemon['type'] is String) {
+      types = [pokemon['type']];
+    }
+
+    List<Color> borderColors = types.map((type) => _getPokemonTypeBorderColor(type)).toList();
+    if (borderColors.length == 1) borderColors.add(borderColors.first);
 
     return GestureDetector(
       onTap: () {
-        // Obre el detall del Pokémon
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -277,7 +301,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
         );
       },
       onLongPress: () {
-        // Selecciona per comparar
         setState(() {
           if (_selectedPokemon1 == null) {
             _selectedPokemon1 = pokemon;
@@ -289,28 +312,39 @@ class _PokedexScreenState extends State<PokedexScreen> {
           }
         });
       },
-      child: Card(
-        color: isSelected ? Colors.blueGrey : (isDarkMode ? Colors.black26 : Colors.white),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: borderColor,
-            width: 3,  // Canvia l'amplada de la borda aquí
-          ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: borderColors),
+          borderRadius: BorderRadius.circular(20),
         ),
-        elevation: 10,
-        shadowColor: isDarkMode ? Colors.black87 : Colors.black26,
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
+        padding: EdgeInsets.all(4),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.amber.withOpacity(0.25) // 🔁 color per OnLongPress (seleccionat)
+                : (isDarkMode ? Colors.grey[900] : Colors.grey[100]),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode ? Colors.black54 : Colors.grey.withOpacity(0.3),
+                blurRadius: 6,
+                offset: Offset(2, 4),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(12),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,  // Centrar els elements
-            crossAxisAlignment: CrossAxisAlignment.center,  // Centrar els elements
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.network(pokemon['image'], height: 100, width: 100),
-              SizedBox(height: 8),
+              SizedBox(height: 10),
               Text(
                 pokemon['name'],
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
               ),
             ],
           ),
@@ -319,7 +353,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
     );
   }
 
-  // Mètode per obtenir el color de la borda segons el tipus
   Color _getPokemonTypeBorderColor(String type) {
     Map<String, Color> typeBorderColors = {
       'water': Colors.blue,
@@ -339,6 +372,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
       'ice': Colors.cyan,
     };
 
-    return typeBorderColors[type] ?? Colors.grey;  // Valor per defecte si no hi ha tipus
+    return typeBorderColors[type.toLowerCase()] ?? Colors.grey;
   }
 }

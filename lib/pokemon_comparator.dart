@@ -52,6 +52,8 @@ class _PokemonComparatorState extends State<PokemonComparator> {
   }
 
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
+    final types = pokemon['type'] as List;
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 8,
@@ -78,7 +80,7 @@ class _PokemonComparatorState extends State<PokemonComparator> {
             ),
             SizedBox(height: 6),
             Text(
-              'Tipus: ${pokemon['type']}',
+              'Tipus: ${types.join(', ')}',
               style: TextStyle(
                 fontSize: 16,
                 color: isDarkMode ? Colors.white70 : Colors.black,
