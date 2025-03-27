@@ -6,8 +6,8 @@ import 'favorites_manager.dart';
 import 'theme_provider.dart';
 import 'pokemon_comparator.dart';
 import 'favorites_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import 'pokeball_loader.dart';
 
 class PokedexScreen extends StatefulWidget {
   const PokedexScreen({Key? key}) : super(key: key);
@@ -25,11 +25,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
   int _offset = 0;
   final int _limit = 20;
 
-  // Pokémon seleccionats per comparar
   dynamic _selectedPokemon1;
   dynamic _selectedPokemon2;
 
-  // Filtres
   String? _selectedType;
   final List<String> _types = [
     'All',
@@ -49,6 +47,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     'fighting',
     'ice'
   ];
+  List<dynamic> _originalOrderList = []; // Per desar l'ordre original
+  bool _isSortedAlphabetically = false; // Per controlar si està ordenat
 
   @override
   void initState() {
@@ -57,15 +57,23 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Future<void> _fetchPokemon() async {
+    setState(() {
+      _isLoading = true; // Activa explícitament la càrrega
+    });
+
+    await Future.delayed(Duration(seconds: 2)); // Retard artificial (2 segons)
+
     List<dynamic> pokemonList =
     await PokemonAPI.fetchPokemon(offset: _offset, limit: _limit);
+
     setState(() {
       _pokemonList.addAll(pokemonList);
+      _originalOrderList.addAll(pokemonList);
       _filteredPokemonList = _pokemonList;
       _isLoading = false;
     });
   }
-
+  
   void _loadMorePokemon() {
     setState(() {
       _offset += _limit;
@@ -78,11 +86,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              PokemonComparator(
-                firstPokemon: _selectedPokemon1,
-                secondPokemon: _selectedPokemon2,
-              ),
+          builder: (context) => PokemonComparator(
+            firstPokemon: _selectedPokemon1,
+            secondPokemon: _selectedPokemon2,
+          ),
         ),
       );
     } else {
@@ -94,7 +101,14 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   void _sortPokemonAlphabetically() {
     setState(() {
-      _filteredPokemonList.sort((a, b) => a['name'].compareTo(b['name']));
+      if (_isSortedAlphabetically) {
+        // Torna a l'ordre original
+        _filteredPokemonList = [..._originalOrderList];
+      } else {
+        // Ordena alfabèticament
+        _filteredPokemonList.sort((a, b) => a['name'].compareTo(b['name']));
+      }
+      _isSortedAlphabetically = !_isSortedAlphabetically;
     });
   }
 
@@ -114,9 +128,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme
-        .of(context)
-        .brightness == Brightness.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -166,10 +178,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
                     onChanged: (query) {
                       setState(() {
                         _filteredPokemonList = _pokemonList
-                            .where((pokemon) =>
-                            pokemon['name']
-                                .toLowerCase()
-                                .contains(query.toLowerCase()))
+                            .where((pokemon) => pokemon['name']
+                            .toLowerCase()
+                            .contains(query.toLowerCase()))
                             .toList();
                       });
                     },
@@ -183,7 +194,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
                   ),
                 ),
                 SizedBox(width: 10),
-                // Selector de tipus
                 DropdownButton<String>(
                   value: _selectedType,
                   hint: Text("Selecciona tipus"),
@@ -199,10 +209,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
                       if (_selectedType == 'All') {
                         _filteredPokemonList = _pokemonList;
                       } else {
-                        _filteredPokemonList = _pokemonList
-                            .where((pokemon) =>
-                            pokemon['type'].contains(_selectedType))
-                            .toList();
+                        _filteredPokemonList = _pokemonList.where((pokemon) {
+                          final rawType = pokemon['type'];
+                          final List<String> types = rawType is List
+                              ? List<String>.from(rawType)
+                              : [rawType.toString()];
+                          return types.contains(_selectedType);
+                        }).toList();
                       }
                     });
                   },
@@ -224,7 +237,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
           ),
           Expanded(
             child: _isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? PokeballLoader()
                 : _isGridView
                 ? _buildGridView(isDarkMode)
                 : _buildListView(isDarkMode),
@@ -278,9 +291,9 @@ class _PokedexScreenState extends State<PokedexScreen> {
   }
 
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
-    bool isSelected = pokemon == _selectedPokemon1 || pokemon == _selectedPokemon2;
+    bool isSelected =
+        pokemon == _selectedPokemon1 || pokemon == _selectedPokemon2;
 
-    // Llista de tipus
     List<String> types = [];
     if (pokemon['type'] is List) {
       types = List<String>.from(pokemon['type']);
@@ -288,7 +301,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
       types = [pokemon['type']];
     }
 
-    List<Color> borderColors = types.map((type) => _getPokemonTypeBorderColor(type)).toList();
+    List<Color> borderColors =
+    types.map((type) => _getPokemonTypeBorderColor(type)).toList();
     if (borderColors.length == 1) borderColors.add(borderColors.first);
 
     return GestureDetector(
@@ -304,7 +318,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
         setState(() {
           if (_selectedPokemon1 == null) {
             _selectedPokemon1 = pokemon;
-          } else if (_selectedPokemon2 == null && _selectedPokemon1 != pokemon) {
+          } else if (_selectedPokemon2 == null &&
+              _selectedPokemon1 != pokemon) {
             _selectedPokemon2 = pokemon;
           } else {
             _selectedPokemon1 = pokemon;
@@ -321,12 +336,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
         child: Container(
           decoration: BoxDecoration(
             color: isSelected
-                ? Colors.amber.withOpacity(0.25) // 🔁 color per OnLongPress (seleccionat)
+                ? Colors.amber.withOpacity(0.25)
                 : (isDarkMode ? Colors.grey[900] : Colors.grey[100]),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? Colors.black54 : Colors.grey.withOpacity(0.3),
+                color:
+                isDarkMode ? Colors.black54 : Colors.grey.withOpacity(0.3),
                 blurRadius: 6,
                 offset: Offset(2, 4),
               ),
@@ -336,7 +352,10 @@ class _PokedexScreenState extends State<PokedexScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.network(pokemon['image'], height: 100, width: 100),
+              Hero(
+                tag: pokemon['name'],
+                child: Image.network(pokemon['image'], height: 100, width: 100),
+              ),
               SizedBox(height: 10),
               Text(
                 pokemon['name'],

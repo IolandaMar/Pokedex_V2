@@ -103,7 +103,8 @@ class _PokemonDetailState extends State<PokemonDetail> {
   }
 
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
-    final types = pokemon['type'] as List;
+    final typesRaw = pokemon['type'];
+    final List<String> types = typesRaw is List ? List<String>.from(typesRaw) : [typesRaw.toString()];
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -114,11 +115,14 @@ class _PokemonDetailState extends State<PokemonDetail> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Image.network(
-              pokemon['image'],
-              height: 150,
-              width: 150,
-              fit: BoxFit.cover,
+            Hero(
+              tag: widget.pokemon['name'],
+              child: Image.network(
+                widget.pokemon['image'],
+                height: 150,
+                width: 150,
+                fit: BoxFit.cover,
+              ),
             ),
             SizedBox(height: 20),
             Text(

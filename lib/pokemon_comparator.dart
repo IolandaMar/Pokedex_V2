@@ -52,7 +52,8 @@ class _PokemonComparatorState extends State<PokemonComparator> {
   }
 
   Widget _buildPokemonCard(dynamic pokemon, bool isDarkMode) {
-    final types = pokemon['type'] as List;
+    final typesRaw = pokemon['type'];
+    final List<String> types = typesRaw is List ? List<String>.from(typesRaw) : [typesRaw.toString()];
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
